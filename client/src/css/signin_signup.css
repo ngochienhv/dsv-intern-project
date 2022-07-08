@@ -1,0 +1,96 @@
+@keyframes slideInFromLeft {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInFromRight {
+    0% {
+        transform: translateX(100%);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+.form-signin-container {
+    text-align: center;
+    margin: auto;
+}
+
+#form_signin_1 {
+    margin-top: 5%;
+}
+@media (min-width: 768px) and (max-width: 1800px) {
+    .form-signin-container#form_signup_1 {
+        animation: 0.3s ease-in-out 0s 1 slideInFromLeft;
+    }
+
+    .form-signin-container#form_signin_1 {
+        animation: 0.3s ease-in-out 0s 1 slideInFromRight;
+    }
+}
+
+.form-username-input > label {
+    margin-left: 0;
+    font-size: 16px;
+    float: left;
+}
+
+.form-username-input > div > input {
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+}
+
+.form-password-input > div > div {
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+}
+
+.form-password-input > label {
+    font-size: 16px;
+    float: left;
+}
+
+/* this is toggle password button */
+/* .mantine-1vhreye {
+    margin-top: 30px;
+} */
+
+.form-company-logo {
+    background: transparent;
+    color: black;
+    transition: color 0.3s;
+    height: auto;
+}
+
+.form-company-logo:hover {
+    background: transparent;
+    color: Gray;
+}
+
+.form-company-logo-text {
+    font-size: 48px;
+}
+
+.form-signin-submit-btn {
+    width: 100%;
+    border-radius: 15px;
+    transition: color 0.3s;
+}
+
+.form-signin-submit-btn:hover {
+    color: gray;
+}
+
+/* toggle password button */
+.mantine-o3oqoy > button {
+    margin-top: 27px;
+}

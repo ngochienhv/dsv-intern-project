@@ -1,0 +1,10 @@
+.header-container-box {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    height: 100%;
+}
+
+.mantine-Drawer-closeButton {
+    margin-top: 0px;
+}

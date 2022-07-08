@@ -1,0 +1,29 @@
+{
+    "name": "hiennn",
+    "version": "1.0.0",
+    "description": "",
+    "main": "./server/server.ts",
+    "scripts": {
+        "client-install": "npm install --prefix client",
+        "start": "node index.js",
+        "server": "nodemon ./server/server.ts",
+        "client": "npm start --prefix client",
+        "dev": "concurrently \"npm run server\" \"npm run client\""
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://gitlab.com:designveloper/internal/internship-130622/group_2/hiennn.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://gitlab.com:designveloper/internal/internship-130622/group_2/hiennn/issues"
+    },
+    "homepage": "https://gitlab.com:designveloper/internal/internship-130622/group_2/hiennn#readme",
+    "dependencies": {
+        "concurrently": "^7.0.0",
+        "nodemon": "^2.0.18",
+        "typescript": "^4.7.3"
+    }
+}
