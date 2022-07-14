@@ -11,6 +11,7 @@ import {
     Alert,
     Card,
     useMantineTheme,
+    Group,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useDocumentTitle, useViewportSize } from "@mantine/hooks";
@@ -21,6 +22,8 @@ import { useNavigate } from "react-router-dom";
 import AppShell from "../general/layout/appShell";
 import Headers from "../general/layout/header";
 import Footers from "../general/layout/footer";
+import { baseUrl } from "../general/others/fetchDataFunctions";
+import { GoogleLogin } from "@react-oauth/google";
 
 export default function Signin() {
     const theme = useMantineTheme();
@@ -52,7 +55,7 @@ export default function Signin() {
         };
 
         await axios
-            .post("http://localhost:5000/api/users/login", body)
+            .post(baseUrl + "/users/login", body)
             .then((response) => {
                 console.log(response);
                 localStorage.setItem("user", JSON.stringify(response.data));
@@ -125,15 +128,24 @@ export default function Signin() {
                                 <Space h="md" />
                             </>
                         ) : null}
-                        <Button
-                            type="submit"
-                            color="dark"
-                            className="form-signin-submit-btn"
-                            fullWidth
-                        >
-                            SIGN IN
-                        </Button>
-
+                        <Group direction="column">
+                            <Button
+                                type="submit"
+                                color="dark"
+                                className="form-signin-submit-btn"
+                                fullWidth
+                            >
+                                SIGN IN
+                            </Button>
+                            {/* <GoogleLogin
+                                onSuccess={(credentialResponse) => {
+                                    console.log(credentialResponse);
+                                }}
+                                onError={() => {
+                                    console.log("Login Failed");
+                                }}
+                            /> */}
+                        </Group>
                         <Space h="sm" />
                         <Text color="gray">
                             Haven't had an account yet? Sign up now{" "}

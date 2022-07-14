@@ -23,12 +23,12 @@ type Props = {
     otherArticles: {
         _id: string;
         title: string;
-        tag: string;
         slug: string;
         lastUpdated: string;
     }[];
     own: boolean;
 };
+
 export default function ArticleSideBar({ author, otherArticles, own }: Props) {
     const theme = useMantineTheme();
     const [followed, setFollowed] = React.useState<boolean>(author.followed);
@@ -44,7 +44,7 @@ export default function ArticleSideBar({ author, otherArticles, own }: Props) {
                     <Avatar
                         radius={50}
                         size="xl"
-                        src={`data:image/jpeg;base64,${author.avatar}`}
+                        src={author.avatar}
                         component={Link}
                         to={
                             !own
@@ -92,19 +92,17 @@ export default function ArticleSideBar({ author, otherArticles, own }: Props) {
                             1k followers
                         </Text> */}
                     </Group>
+                    {!own && (
+                        <FollowBtns
+                            followed={followed}
+                            username={author.username}
+                            setFollowed={setFollowed}
+                        />
+                    )}
                 </Group>
             </Grid.Col>
             <Grid.Col>
                 <Text size="md">{author.description}</Text>
-            </Grid.Col>
-            <Grid.Col>
-                {!own && (
-                    <FollowBtns
-                        followed={followed}
-                        username={author.username}
-                        setFollowed={setFollowed}
-                    />
-                )}
             </Grid.Col>
             <Space h="md" />
             <Grid.Col>
@@ -113,16 +111,18 @@ export default function ArticleSideBar({ author, otherArticles, own }: Props) {
                 </Title>
             </Grid.Col>
             <Grid.Col>
-                <ScrollArea style={{ height: "55vh" }}>
+                <ScrollArea style={{ height: "30vh" }}>
                     <Container>
                         <Grid>
                             {otherArticles.length > 0 ? (
                                 otherArticles.map((article) => (
-                                    <Grid.Col>
+                                    <Grid.Col key={article._id}>
                                         <SmallArticleCard
                                             author={author}
-                                            article={article}
-                                            own={own}
+                                            _id={article._id}
+                                            title={article.title}
+                                            slug={article.slug}
+                                            lastUpdated={article.lastUpdated}
                                         />
                                     </Grid.Col>
                                 ))

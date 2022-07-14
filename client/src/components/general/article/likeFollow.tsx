@@ -2,6 +2,7 @@ import React from "react";
 import { ActionIcon, Card, Group, Title, Tooltip } from "@mantine/core";
 import { Bookmark, Heart } from "tabler-icons-react";
 import Notifications from "../others/notification";
+import { baseUrl } from "../others/fetchDataFunctions";
 import axios from "axios";
 
 export default function LikeFollowControll({
@@ -27,8 +28,8 @@ export default function LikeFollowControll({
         setLoading(true);
         let token = JSON.parse(localStorage.getItem("user") || "{}").token;
         let url = favorite
-            ? `http://localhost:5000/api/article/unlike?articleId=${id}`
-            : `http://localhost:5000/api/article/like?articleId=${id}`;
+            ? `${baseUrl}/article/unlike?articleId=${id}`
+            : `${baseUrl}/article/like?articleId=${id}`;
         if (token) {
             await axios
                 .post(
@@ -64,8 +65,8 @@ export default function LikeFollowControll({
         setLoading(true);
         let token = JSON.parse(localStorage.getItem("user") || "{}").token;
         let url = bookmark
-            ? `http://localhost:5000/api/article/bm/unbookmark?articleId=${id}`
-            : `http://localhost:5000/api/article/bm/bookmark?articleId=${id}`;
+            ? `${baseUrl}/article/bm/unbookmark?articleId=${id}`
+            : `${baseUrl}/article/bm/bookmark?articleId=${id}`;
         if (token) {
             await axios
                 .post(
@@ -114,7 +115,8 @@ export default function LikeFollowControll({
             />
             <Tooltip
                 label={bookmark ? "Remove bookmark" : "Bookmark this post"}
-                withArrow
+                transition="fade"
+                transitionDuration={300}
             >
                 <ActionIcon
                     color="blue"
@@ -134,10 +136,11 @@ export default function LikeFollowControll({
                 <Group spacing={8}>
                     <Tooltip
                         label={favorite ? "Unlike this post" : "Like this post"}
-                        withArrow
+                        transition="fade"
+                        transitionDuration={300}
                     >
                         <ActionIcon
-                            color="blue"
+                            color="red"
                             variant="transparent"
                             onClick={() => handleLikeArticle()}
                             loading={loading}
@@ -145,7 +148,7 @@ export default function LikeFollowControll({
                             <Heart
                                 size={28}
                                 strokeWidth={2}
-                                fill={favorite ? "#2181d7" : "none"}
+                                fill={favorite ? "red" : "none"}
                             />
                         </ActionIcon>
                     </Tooltip>

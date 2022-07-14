@@ -12,12 +12,15 @@ import {
     MantineTheme,
     Menu,
     Avatar,
+    TextInput,
 } from "@mantine/core";
+import { useInputState } from "@mantine/hooks";
 import { Link } from "react-router-dom";
 import { Sun, MoonStars, Logout, UserCircle, News } from "tabler-icons-react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../others/logo";
 import "../../../css/header.css";
+import { Search } from "tabler-icons-react";
 
 type Props = {
     theme: MantineTheme;
@@ -26,6 +29,7 @@ type Props = {
 export default function Headers({ theme, signin }: Props) {
     const { colorScheme, toggleColorScheme } = useMantineColorScheme();
     const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const [stringValue, setStringValue] = useInputState<string>("");
     const navigate = useNavigate();
     const dark = colorScheme === "dark";
 
@@ -61,19 +65,60 @@ export default function Headers({ theme, signin }: Props) {
 
     return (
         <Header height={60} p="md">
-            <Grid>
+            <Grid columns={15}>
                 <MediaQuery smallerThan="sm" styles={{ maxWidth: "20%" }}>
-                    <Grid.Col span={1} style={{ textAlign: "center" }}>
+                    <Grid.Col
+                        xl={3}
+                        lg={3}
+                        md={3}
+                        sm={2}
+                        xs={3}
+                        style={{ textAlign: "center" }}
+                    >
                         <Logo />
                     </Grid.Col>
                 </MediaQuery>
+                <MediaQuery smallerThan="sm" styles={{ display: "none" }}>
+                    <Grid.Col xl={6} lg={6} md={6} sm={6} xs={0}>
+                        <TextInput
+                            placeholder="Search..."
+                            rightSection={
+                                <Button
+                                    variant="subtle"
+                                    onClick={() =>
+                                        navigate(
+                                            `/search?q=${encodeURIComponent(
+                                                stringValue
+                                            )}`
+                                        )
+                                    }
+                                >
+                                    <Search />
+                                </Button>
+                            }
+                            rightSectionWidth={70}
+                            radius={10}
+                            type="search"
+                            value={stringValue}
+                            onChange={setStringValue}
+                            onKeyPress={(e) =>
+                                e.key === "Enter" &&
+                                navigate(
+                                    `/search?q=${encodeURIComponent(
+                                        stringValue
+                                    )}`
+                                )
+                            }
+                        />
+                    </Grid.Col>
+                </MediaQuery>
                 <MediaQuery smallerThan="sm" styles={{ maxWidth: "80%" }}>
-                    <Grid.Col span={11}>
+                    <Grid.Col xl={6} lg={6} md={5} sm={6} xs={11}>
                         <Box className="header-container-box">
                             <Group
                                 direction="row"
                                 position="right"
-                                spacing={40}
+                                spacing={20}
                                 style={{ marginTop: -4 }}
                             >
                                 <MediaQuery
@@ -103,12 +148,7 @@ export default function Headers({ theme, signin }: Props) {
                                                         <Avatar
                                                             radius={50}
                                                             size="sm"
-                                                            src={
-                                                                user.avatar !==
-                                                                ""
-                                                                    ? `data:image/jpeg;base64,${user.avatar}`
-                                                                    : null
-                                                            }
+                                                            src={user.avatar}
                                                             placeholder={
                                                                 user.name
                                                             }
@@ -171,11 +211,49 @@ export default function Headers({ theme, signin }: Props) {
                                                 })}
                                                 radius={30}
                                             >
-                                                Get started
+                                                Login
+                                            </Button>
+                                        </Link>
+                                        <Link to="/register">
+                                            <Button
+                                                sx={() => ({
+                                                    backgroundColor:
+                                                        theme.colorScheme ===
+                                                        "dark"
+                                                            ? theme.colors
+                                                                  .blue[8]
+                                                            : theme.colors
+                                                                  .dark[9],
+                                                    transition:
+                                                        "background-color 0.3s",
+                                                    "&:hover": {
+                                                        backgroundColor:
+                                                            theme.colorScheme ===
+                                                            "dark"
+                                                                ? theme.colors
+                                                                      .blue[4]
+                                                                : theme.colors
+                                                                      .dark[5],
+                                                    },
+                                                })}
+                                                radius={30}
+                                            >
+                                                Register
                                             </Button>
                                         </Link>
                                     </>
                                 ) : null}
+                                <MediaQuery
+                                    largerThan="sm"
+                                    styles={{ display: "none" }}
+                                >
+                                    <Button
+                                        variant="subtle"
+                                        onClick={() => navigate("/search?q=")}
+                                    >
+                                        <Search />
+                                    </Button>
+                                </MediaQuery>
                                 <ActionIcon
                                     variant="outline"
                                     color={dark ? "dark" : "gray"}

@@ -18,7 +18,9 @@ import { UseForm } from "@mantine/hooks/lib/use-form/use-form";
 import ImgDropzone from "../others/imgDropzone";
 import { Article } from "../../user/editPost";
 import Notifications from "../others/notification";
+import { baseUrl } from "../others/fetchDataFunctions";
 import { X } from "tabler-icons-react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 type Props = {
@@ -71,8 +73,11 @@ export default function PreviewModal({
     const [notiStatus, setNotiStatus] = React.useState<string>("");
     const [tag, setTag] = React.useState<string>("");
     const [tagDel, setTagDel] = React.useState<string[]>([]);
+    const [id, setId] = React.useState<string>("");
+    const [slug, setSlug] = React.useState<string>("");
     const tagInput = React.useRef() as React.MutableRefObject<HTMLInputElement>;
     const image = React.useRef() as React.MutableRefObject<HTMLImageElement>;
+    const navigate = useNavigate();
 
     const handlePublishArticle = async () => {
         const { title, description, image, tags } = form.values;
@@ -93,7 +98,7 @@ export default function PreviewModal({
         const values = { ...form.values, tagDel: tagDel };
         values.published = true;
         await axios
-            .put("http://localhost:5000/api/articles", values, {
+            .put(baseUrl + "/articles", values, {
                 headers: {
                     "x-access-token": JSON.parse(
                         localStorage.getItem("user") || "{}"
@@ -103,6 +108,8 @@ export default function PreviewModal({
             .then((response) => {
                 console.log(response);
                 if (response.status === 200) {
+                    setId(response.data._id);
+                    setSlug(response.data.slug);
                     setNoti(true);
                     setNotiMessage("Published successfully!");
                     setNotiStatus("success");
@@ -152,6 +159,12 @@ export default function PreviewModal({
             });
         }
     }, [file]);
+
+    React.useEffect(() => {
+        if (id !== "" && slug !== "") {
+            navigate(`/article/${slug}/${id}`);
+        }
+    }, [id, slug]);
 
     return (
         <Modal

@@ -6,6 +6,7 @@ async function GetBookmarkedArticleAPI(req: ReqExtendUser, res: Response) {
     const username = req.params.username;
 
     const userRes = await ArticleModel.getBookmarkArticle(
+        req.headers["x-access-token"],
         username,
         req.params.page
     );

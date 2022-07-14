@@ -1,57 +1,53 @@
-import {
-    Avatar,
-    Container,
-    Group,
-    Title,
-    useMantineTheme,
-    Button,
-    Card,
-} from "@mantine/core";
+import { Avatar, Group, Title, Anchor, Card, Text } from "@mantine/core";
 import React from "react";
+import { userFollower } from "./profileAbout";
+import { Link } from "react-router-dom";
+import { useShallowEffect } from "@mantine/hooks";
+import FollowBtns from "./followBtns";
 
-export default function UserSmallCard() {
-    const theme = useMantineTheme();
+export default function UserSmallCard(user: userFollower) {
+    const [followed, setFollowed] = React.useState<boolean>(user.followed);
+
+    useShallowEffect(() => {
+        setFollowed(user.followed);
+    }, [user.followed]);
 
     return (
         <Card>
-            <Group>
-                <Avatar radius={50} />
-                <Group direction="column" spacing={5}>
-                    <Title order={6}>Nguyen Van A</Title>
-                    <Group spacing={6}>
-                        <Title order={6}>Followers</Title>
-                        <Title
-                            order={6}
-                            sx={() => ({
-                                color:
-                                    theme.colorScheme === "dark"
-                                        ? theme.colors.blue[8]
-                                        : theme.colors.dark[2],
-                            })}
-                        >
-                            (1.000)
+            <Group direction="row">
+                <Avatar
+                    radius="xl"
+                    src={user.avatar}
+                    component={Link}
+                    to={`/profile/${user.username}`}
+                />
+                <Group direction="column" spacing={3}>
+                    <Anchor
+                        component={Link}
+                        to={`/profile/${user.username}`}
+                        underline={false}
+                        variant="text"
+                    >
+                        <Title order={5}>
+                            {user.lastname + " " + user.firstname}
                         </Title>
-                    </Group>
+                    </Anchor>
+                    <Text
+                        size="sm"
+                        color="gray"
+                        component={Link}
+                        to={`/profile/${user.username}`}
+                    >
+                        {"@" + user.username}
+                    </Text>
                 </Group>
-                <Button
-                    sx={() => ({
-                        backgroundColor:
-                            theme.colorScheme === "dark"
-                                ? theme.colors.blue[8]
-                                : theme.colors.dark[9],
-                        transition: "background-color 0.3s",
-                        "&:hover": {
-                            backgroundColor:
-                                theme.colorScheme === "dark"
-                                    ? theme.colors.blue[4]
-                                    : theme.colors.dark[5],
-                        },
-                    })}
-                    radius={30}
-                    size="xs"
-                >
-                    Follow
-                </Button>
+                {!user.own && (
+                    <FollowBtns
+                        followed={followed}
+                        username={user.username}
+                        setFollowed={setFollowed}
+                    />
+                )}
             </Group>
         </Card>
     );

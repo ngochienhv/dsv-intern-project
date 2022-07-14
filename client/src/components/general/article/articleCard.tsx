@@ -22,56 +22,75 @@ import Tag from "../others/tag";
 import Notifications from "../others/notification";
 import { Article } from "../../user/editor";
 import LikeFollowControll from "./likeFollow";
+import { useModals } from "@mantine/modals";
 
 type Props = {
-    _id: string;
-    author: {
+    article: {
         _id: string;
-        username: string;
-        firstname: string;
-        lastname: string;
-        avatar: string;
+        author: {
+            _id: string;
+            username: string;
+            firstname: string;
+            lastname: string;
+            avatar: string;
+        };
+        description: string;
+        favoritesCount: number;
+        favorited: boolean;
+        bookmarked: boolean;
+        image: string;
+        lastUpdated: string;
+        slug: string;
+        tags: string[] | null;
+        title: string;
+        own: boolean;
+        editable: boolean;
     };
-    description: string;
-    favoritesCount: number;
-    favorited: boolean;
-    bookmarked: boolean;
-    image: string;
-    lastUpdated: string;
-    slug: string;
-    tags: string[] | null;
-    title: string;
-    own: boolean;
     setArticleId: Dispatch<SetStateAction<string>>;
     setArticles: Dispatch<SetStateAction<Article[]>>;
-    editable: boolean;
 };
 
 export default function ArticleCard({
-    _id,
-    title,
-    description,
-    author,
-    image,
-    slug,
-    tags,
-    lastUpdated,
-    favoritesCount,
-    favorited,
-    bookmarked,
-    own,
+    article,
     setArticleId,
     setArticles,
-    editable,
 }: Props) {
     const { width } = useViewportSize();
     const [noti, setNoti] = React.useState<boolean>(false);
     const [notiMessage, setNotiMessage] = React.useState<string>("");
     const [notiStatus, setNotiStatus] = React.useState<string>("");
     const theme = useMantineTheme();
+    const modals = useModals();
+
+    const openDeleteModal = () =>
+        modals.openConfirmModal({
+            title: (
+                <Title order={3} style={{ color: "#f03e3e" }}>
+                    Delete Article
+                </Title>
+            ),
+            centered: true,
+            children: (
+                <Text size="sm">
+                    Are you sure you want to delete this article, this article
+                    will be deleted permanently and can't be recovered!
+                </Text>
+            ),
+            labels: { confirm: "Delete article", cancel: "Cancel" },
+            confirmProps: { color: "red" },
+            onCancel: () => console.log("Cancel"),
+            onConfirm: () =>
+                handleDeleteArticle(
+                    article._id,
+                    setNoti,
+                    setNotiMessage,
+                    setNotiStatus,
+                    setArticles
+                ),
+        });
 
     return (
-        <div key={_id}>
+        <div key={article._id}>
             <Notifications
                 noti={noti}
                 setNoti={setNoti}
@@ -86,59 +105,57 @@ export default function ArticleCard({
                         : { borderBottom: "2px solid #ced4da" }
                 }
                 pb={5}
-                key={_id}
+                key={article._id}
             >
-                <Grid columns={22} key={_id}>
+                <Grid columns={22} key={article._id}>
                     <Grid.Col key={0}>
-                        {!own && (
-                            <Group direction="row">
-                                <Avatar
-                                    radius="xl"
-                                    src={`data:image/jpeg;base64,${author.avatar}`}
+                        <Group direction="row">
+                            <Avatar
+                                radius="xl"
+                                src={article.author.avatar}
+                                component={Link}
+                                to={`/profile/${article.author.username}`}
+                            />
+                            <Group direction="column" spacing={3}>
+                                <Anchor
                                     component={Link}
-                                    to={`/profile/${author.username}`}
-                                />
-                                <Group direction="column" spacing={3}>
-                                    <Anchor
-                                        component={Link}
-                                        to={`/profile/${author.username}`}
-                                        underline={false}
-                                        variant="text"
-                                    >
-                                        <Title order={5}>
-                                            {author.lastname +
-                                                " " +
-                                                author.firstname}
-                                        </Title>
-                                    </Anchor>
-                                    <Text
-                                        size="sm"
-                                        color="gray"
-                                        component={Link}
-                                        to={`/profile/${author.username}`}
-                                    >
-                                        {"@" + author.username}
-                                    </Text>
-                                </Group>
+                                    to={`/profile/${article.author.username}`}
+                                    underline={false}
+                                    variant="text"
+                                >
+                                    <Title order={5}>
+                                        {article.author.lastname +
+                                            " " +
+                                            article.author.firstname}
+                                    </Title>
+                                </Anchor>
+                                <Text
+                                    size="sm"
+                                    color="gray"
+                                    component={Link}
+                                    to={`/profile/${article.author.username}`}
+                                >
+                                    {"@" + article.author.username}
+                                </Text>
                             </Group>
-                        )}
+                        </Group>
                     </Grid.Col>
                     <Grid.Col xl={18} lg={18} md={18} sm={16} xs={13} key={1}>
                         <Group direction="column" spacing={5}>
                             <Anchor
                                 component={Link}
-                                to={`/article/${slug}/${_id}`}
+                                to={`/article/${article.slug}/${article._id}`}
                                 underline={false}
                                 variant="text"
                             >
-                                <Title order={3}>{title}</Title>
+                                <Title order={3}>{article.title}</Title>
                             </Anchor>
                             <Text
                                 component={Link}
-                                to={`/article/${slug}/${_id}`}
+                                to={`/article/${article.slug}/${article._id}`}
                                 lineClamp={2}
                             >
-                                {description}
+                                {article.description}
                             </Text>
                         </Group>
                     </Grid.Col>
@@ -152,11 +169,11 @@ export default function ArticleCard({
                     >
                         <Anchor
                             component={Link}
-                            to={`/article/${slug}/${_id}`}
+                            to={`/article/${article.slug}/${article._id}`}
                             underline={false}
                             variant="text"
                         >
-                            <Image src={image} fit="cover" />
+                            <Image src={article.image} fit="cover" />
                         </Anchor>
                     </Grid.Col>
                     <Grid.Col>
@@ -167,20 +184,25 @@ export default function ArticleCard({
                                 style={{ marginRight: -8 }}
                             />
                             <Text size="sm" color="gray">
-                                {lastUpdated}
+                                {new Date(article.lastUpdated).toDateString()}
                             </Text>
-                            {tags
-                                ?.slice(0, tags.length > 2 ? 2 : tags.length)
+                            {article.tags
+                                ?.slice(
+                                    0,
+                                    article.tags.length > 2
+                                        ? 2
+                                        : article.tags.length
+                                )
                                 .map((tag) => (
                                     <Tag tag={tag} key={tag} />
                                 ))}
 
-                            {!own ? (
+                            {!article.own ? (
                                 <LikeFollowControll
-                                    id={_id}
-                                    favorited={favorited}
-                                    favoritesCount={favoritesCount}
-                                    bookmarked={bookmarked}
+                                    id={article._id}
+                                    favorited={article.favorited}
+                                    favoritesCount={article.favoritesCount}
+                                    bookmarked={article.bookmarked}
                                 />
                             ) : (
                                 <Group spacing={2}>
@@ -193,21 +215,21 @@ export default function ArticleCard({
                                     >
                                         <Group spacing={5}>
                                             <ActionIcon
-                                                color="blue"
+                                                color="red"
                                                 variant="transparent"
                                             >
                                                 <Heart
                                                     size={28}
                                                     strokeWidth={2}
-                                                    fill="#2181d7"
+                                                    fill="red"
                                                 />
                                             </ActionIcon>
                                             <Title order={5}>
-                                                {favoritesCount}
+                                                {article.favoritesCount}
                                             </Title>
                                         </Group>
                                     </Card>
-                                    {editable && (
+                                    {article.editable && (
                                         <Menu size="sm" shadow="sm">
                                             <Menu.Item
                                                 icon={
@@ -217,7 +239,7 @@ export default function ArticleCard({
                                                     />
                                                 }
                                                 onClick={() =>
-                                                    setArticleId(_id)
+                                                    setArticleId(article._id)
                                                 }
                                             >
                                                 Edit
@@ -231,13 +253,7 @@ export default function ArticleCard({
                                                     />
                                                 }
                                                 onClick={() =>
-                                                    handleDeleteArticle(
-                                                        _id,
-                                                        setNoti,
-                                                        setNotiMessage,
-                                                        setNotiStatus,
-                                                        setArticles
-                                                    )
+                                                    openDeleteModal()
                                                 }
                                             >
                                                 Delete

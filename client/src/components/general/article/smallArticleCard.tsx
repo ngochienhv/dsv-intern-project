@@ -1,7 +1,6 @@
 import {
     Avatar,
     Container,
-    Grid,
     Group,
     Title,
     Card,
@@ -14,44 +13,34 @@ import { Link } from "react-router-dom";
 import React from "react";
 import { Post } from "../../user/article";
 
-type Props = {
+export type smallArticle = {
     author: Post["author"];
-    article: {
-        _id: string;
-        title: string;
-        tag: string;
-        slug: string;
-        lastUpdated: string;
-    };
-    own: boolean;
+    _id: string;
+    title: string;
+    slug: string;
+    lastUpdated: string;
 };
-export default function SmallArticleCard({ author, article, own }: Props) {
+export default function SmallArticleCard({
+    author,
+    _id,
+    title,
+    slug,
+    lastUpdated,
+}: smallArticle) {
     return (
-        <Card
-            component={Link}
-            to={`/article/${article.slug}/${article._id}`}
-            shadow="xs"
-        >
+        <Card shadow="xs">
             <Container>
                 <Group direction="row">
                     <Avatar
                         radius="xl"
-                        src={`data:image/jpeg;base64,${author.avatar}`}
+                        src={author.avatar}
                         component={Link}
-                        to={
-                            !own
-                                ? `/profile/${author.username}`
-                                : `/${author.username}`
-                        }
+                        to={`/profile/${author.username}`}
                         size="sm"
                     />
                     <Anchor
                         component={Link}
-                        to={
-                            !own
-                                ? `/profile/${author.username}`
-                                : `/${author.username}`
-                        }
+                        to={`/profile/${author.username}`}
                         underline={false}
                         variant="text"
                     >
@@ -61,7 +50,16 @@ export default function SmallArticleCard({ author, article, own }: Props) {
                     </Anchor>
                 </Group>
                 <Space h="xs" />
-                <Title order={6}>{article.title}</Title>
+                <Anchor
+                    component={Link}
+                    to={`/article/${slug}/${_id}`}
+                    underline={false}
+                    variant="text"
+                >
+                    <Text component={Title} order={6} lineClamp={1}>
+                        {title}
+                    </Text>
+                </Anchor>
                 <Space h="xs" />
                 <Group>
                     <CalendarTime
@@ -69,7 +67,7 @@ export default function SmallArticleCard({ author, article, own }: Props) {
                         strokeWidth={2}
                         style={{ marginRight: -8 }}
                     />
-                    <Text>{article.lastUpdated}</Text>
+                    <Text>{new Date(lastUpdated).toDateString()}</Text>
                 </Group>
             </Container>
         </Card>

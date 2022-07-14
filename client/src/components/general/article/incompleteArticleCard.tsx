@@ -11,6 +11,7 @@ import { Edit, NewsOff } from "tabler-icons-react";
 import Notifications from "../others/notification";
 import { handleDeleteArticle } from "../others/fetchDataFunctions";
 import { Article } from "../../user/editor";
+import { useModals } from "@mantine/modals";
 
 type Props = {
     id: string;
@@ -33,6 +34,34 @@ export default function IncompleteArticleCard({
     const [notiMessage, setNotiMessage] = React.useState<string>("");
     const [notiStatus, setNotiStatus] = React.useState<string>("");
     const theme = useMantineTheme();
+    const modals = useModals();
+
+    const openDeleteModal = () =>
+        modals.openConfirmModal({
+            title: (
+                <Title order={3} style={{ color: "#f03e3e" }}>
+                    Delete Article
+                </Title>
+            ),
+            centered: true,
+            children: (
+                <Text size="sm">
+                    Are you sure you want to delete this article, this article
+                    will be deleted permanently and can't be recovered!
+                </Text>
+            ),
+            labels: { confirm: "Delete article", cancel: "Cancel" },
+            confirmProps: { color: "red" },
+            onCancel: () => console.log("Cancel"),
+            onConfirm: () =>
+                handleDeleteArticle(
+                    id,
+                    setNoti,
+                    setNotiMessage,
+                    setNotiStatus,
+                    setUnpublishedArticles
+                ),
+        });
 
     return (
         <div key={id}>
@@ -60,7 +89,6 @@ export default function IncompleteArticleCard({
                                 {title ? title : "No Title yet"}
                             </Title>
                         </Group>
-                        <Text size="sm">Last updated: {lastUpdated}</Text>
                         <Menu size="sm" shadow="sm">
                             <Menu.Item
                                 icon={<Edit size={20} strokeWidth={2} />}
@@ -71,21 +99,14 @@ export default function IncompleteArticleCard({
                             <Menu.Item
                                 color="red"
                                 icon={<NewsOff size={20} strokeWidth={2} />}
-                                onClick={() =>
-                                    handleDeleteArticle(
-                                        id,
-                                        setNoti,
-                                        setNotiMessage,
-                                        setNotiStatus,
-                                        setUnpublishedArticles
-                                    )
-                                }
+                                onClick={() => openDeleteModal()}
                             >
                                 Delete
                             </Menu.Item>
                         </Menu>
                     </Group>
                     <Text lineClamp={1}>{content}</Text>
+                    <Text size="sm">Last updated: {lastUpdated}</Text>
                 </Group>
             </Container>
         </div>

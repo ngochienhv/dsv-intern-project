@@ -15,6 +15,7 @@ import {
     MediaQuery,
     Tabs,
     Center,
+    Skeleton,
 } from "@mantine/core";
 import { useDocumentTitle, useViewportSize } from "@mantine/hooks";
 import AffixBtn from "../general/others/affix";
@@ -22,24 +23,33 @@ import { useWindowScroll, useShallowEffect } from "@mantine/hooks";
 import Tag from "../general/others/tag";
 import axios from "axios";
 import { Article } from "../user/editor";
+import { smallArticle } from "../general/article/smallArticleCard";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { MoodSad } from "tabler-icons-react";
+import { MoodSad, News } from "tabler-icons-react";
+import { baseUrl } from "../general/others/fetchDataFunctions";
+import ArticleSkeleton from "../general/skeletons/articlesSkeleton";
+import SmallArticleSkeleton from "../general/skeletons/smallArticleSkeleton";
 
 export default function Home() {
     const theme = useMantineTheme();
     const { width } = useViewportSize();
     const [scroll, scrollTo] = useWindowScroll();
     const [articles, setArticles] = React.useState<Article[]>([]);
+    const [trendingArticles, setTrendingArticles] = React.useState<
+        smallArticle[]
+    >([]);
     const [pageOffset, setPageOffset] = React.useState<number>(0);
     const [hasMore, setHasMore] = React.useState<boolean>(true);
     const [popularTags, setPopularTags] = React.useState<string[]>([]);
+    const [tagLoading, setTagLoading] = React.useState<boolean>(true);
+    const [trendingLoading, setTrendingLoading] = React.useState<boolean>(true);
     const token = JSON.parse(localStorage.getItem("user") || "{}").token;
     useDocumentTitle("Home - BBlog");
 
     const getGlobalFeeds = async () => {
         console.log(pageOffset);
         await axios
-            .get(`http://localhost:5000/api/articles/global/${pageOffset}`, {
+            .get(`${baseUrl}/articles/global/${pageOffset}`, {
                 headers: {
                     "x-access-token": token,
                 },
@@ -57,16 +67,32 @@ export default function Home() {
 
     const getPopularTags = async () => {
         await axios
-            .get("http://localhost:5000/api/tags")
+            .get(baseUrl + "/tags")
             .then((response) => {
                 setPopularTags(response.data);
+                setTagLoading(false);
             })
             .catch((error) => {
+                setTagLoading(false);
                 console.log(error);
             });
     };
 
+    const getTrendingArticles = async () => {
+        await axios
+            .get(baseUrl + "/articles/trending")
+            .then((response) => {
+                setTrendingArticles(response.data);
+                setTrendingLoading(false);
+            })
+            .catch((error) => {
+                console.log(error);
+                setTrendingLoading(false);
+            });
+    };
+
     React.useEffect(() => {
+        getTrendingArticles();
         getPopularTags();
     }, []);
 
@@ -84,46 +110,55 @@ export default function Home() {
         >
             <Container size="xl">
                 <Grid>
-                    {width <= 768 ? (
-                        <Grid.Col xl={4} lg={4} md={4} sm={4} xs={12} key={2}>
+                    {width <= 1000 ? (
+                        <Grid.Col xl={4} lg={4} md={4} sm={12} xs={12} key={2}>
                             <Title order={4}>Trending</Title>
                             <Space h="md" />
                             <Grid>
-                                {articles.map((article) => (
-                                    <Grid.Col>
-                                        <SmallArticleCard
-                                            author={{
-                                                ...article.author,
-                                                description: "lorem",
-                                                followed: false,
-                                            }}
-                                            article={{
-                                                _id: article._id,
-                                                title: article.title,
-                                                tag: "lorem",
-                                                slug: article.slug,
-                                                lastUpdated:
-                                                    article.lastUpdated,
-                                            }}
-                                            own={article.own}
-                                        />
-                                    </Grid.Col>
-                                ))}
+                                {!trendingLoading
+                                    ? trendingArticles.map((article) => (
+                                          <Grid.Col key={article._id} sm={6}>
+                                              <SmallArticleCard
+                                                  author={{
+                                                      ...article.author,
+                                                      description: "",
+                                                      followed: false,
+                                                  }}
+                                                  _id={article._id}
+                                                  title={article.title}
+                                                  slug={article.slug}
+                                                  lastUpdated={
+                                                      article.lastUpdated
+                                                  }
+                                              />
+                                          </Grid.Col>
+                                      ))
+                                    : [1, 2, 3, 4].map((x) => (
+                                          <Grid.Col key={x} sm={6}>
+                                              <SmallArticleSkeleton />
+                                          </Grid.Col>
+                                      ))}
                             </Grid>
                             <Divider my="lg" />
                             <Title order={4}>Popular topics</Title>
                             <Space h="md" />
                             <Group direction="row">
-                                {popularTags.map((tag) => (
-                                    <Tag tag={tag} />
-                                ))}
+                                {!tagLoading
+                                    ? popularTags.map((tag) => (
+                                          <Tag tag={tag} />
+                                      ))
+                                    : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(
+                                          (x) => (
+                                              <Skeleton width="auto"></Skeleton>
+                                          )
+                                      )}
                             </Group>
                             <Space h="md" />
                         </Grid.Col>
                     ) : null}
 
                     <MediaQuery smallerThan="xs" styles={{ padding: 0 }}>
-                        <Grid.Col xl={8} lg={8} md={8} sm={8} xs={12} key={0}>
+                        <Grid.Col xl={8} lg={8} md={8} sm={12} xs={12} key={0}>
                             <Tabs>
                                 <Tabs.Tab label="Global feeds" key={5}>
                                     <Grid>
@@ -134,7 +169,11 @@ export default function Home() {
                                             }
                                             onScroll={(e) => e.preventDefault()}
                                             hasMore={hasMore}
-                                            loader={<h4>Loading...</h4>}
+                                            loader={[1, 2, 3].map((x) => (
+                                                <Grid.Col key={x}>
+                                                    <ArticleSkeleton />
+                                                </Grid.Col>
+                                            ))}
                                             endMessage={
                                                 <>
                                                     <Center>
@@ -163,33 +202,14 @@ export default function Home() {
                                                 <Grid.Col key={article._id}>
                                                     <ArticleCard
                                                         key={article._id}
-                                                        _id={article._id}
-                                                        title={article.title}
-                                                        image={article.image}
-                                                        author={article.author}
-                                                        description={
-                                                            article.description
-                                                        }
-                                                        lastUpdated={
-                                                            article.lastUpdated
-                                                        }
-                                                        slug={article.slug}
-                                                        tags={article.tags}
-                                                        favoritesCount={
-                                                            article.favoritesCount
-                                                        }
-                                                        favorited={
-                                                            article.favorited
-                                                        }
-                                                        bookmarked={
-                                                            article.bookmarked
-                                                        }
-                                                        own={article.own}
+                                                        article={{
+                                                            ...article,
+                                                            editable: false,
+                                                        }}
                                                         setArticleId={() => ""}
                                                         setArticles={
                                                             setArticles
                                                         }
-                                                        editable={false}
                                                     />
                                                 </Grid.Col>
                                             ))}
@@ -204,7 +224,7 @@ export default function Home() {
                             </Tabs>
                         </Grid.Col>
                     </MediaQuery>
-                    {width > 768 ? (
+                    {width > 1000 ? (
                         <Grid.Col xl={4} lg={4} md={4} sm={4} xs={12} key={1}>
                             <Container
                                 style={{
@@ -215,9 +235,20 @@ export default function Home() {
                                 <Title order={4}>Popular Topics</Title>
                                 <Space h="md" />
                                 <Group direction="row">
-                                    {popularTags.map((tag) => (
-                                        <Tag tag={tag} key={tag} />
-                                    ))}
+                                    {!tagLoading
+                                        ? popularTags.map((tag) => (
+                                              <Tag tag={tag} key={tag} />
+                                          ))
+                                        : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(
+                                              (x) => (
+                                                  <Skeleton
+                                                      width="auto"
+                                                      key={x}
+                                                  >
+                                                      Lorem, ipsum.
+                                                  </Skeleton>
+                                              )
+                                          )}
                                 </Group>
                                 <Divider my="lg" />
                                 <Title order={4}>Trending</Title>
@@ -225,27 +256,41 @@ export default function Home() {
                                 <ScrollArea style={{ height: "55vh" }}>
                                     <Container>
                                         <Grid>
-                                            {articles.map((article) => (
-                                                <Grid.Col>
-                                                    <SmallArticleCard
-                                                        author={{
-                                                            ...article.author,
-                                                            description:
-                                                                "lorem",
-                                                            followed: false,
-                                                        }}
-                                                        article={{
-                                                            _id: article._id,
-                                                            title: article.title,
-                                                            tag: "lorem",
-                                                            slug: article.slug,
-                                                            lastUpdated:
-                                                                article.lastUpdated,
-                                                        }}
-                                                        own={article.own}
-                                                    />
-                                                </Grid.Col>
-                                            ))}
+                                            {!trendingLoading
+                                                ? trendingArticles.map(
+                                                      (article) => (
+                                                          <Grid.Col
+                                                              key={article._id}
+                                                          >
+                                                              <SmallArticleCard
+                                                                  author={{
+                                                                      ...article.author,
+                                                                      description:
+                                                                          "",
+                                                                      followed:
+                                                                          false,
+                                                                  }}
+                                                                  _id={
+                                                                      article._id
+                                                                  }
+                                                                  title={
+                                                                      article.title
+                                                                  }
+                                                                  slug={
+                                                                      article.slug
+                                                                  }
+                                                                  lastUpdated={
+                                                                      article.lastUpdated
+                                                                  }
+                                                              />
+                                                          </Grid.Col>
+                                                      )
+                                                  )
+                                                : [1, 2, 3, 4].map((x) => (
+                                                      <Grid.Col key={x}>
+                                                          <SmallArticleSkeleton />
+                                                      </Grid.Col>
+                                                  ))}
                                         </Grid>
                                     </Container>
                                 </ScrollArea>
@@ -272,10 +317,11 @@ function FollowingFeeds() {
     const [pageOffset, setPageOffset] = React.useState<number>(0);
     const [hasMore, setHasMore] = React.useState<boolean>(true);
     const token = JSON.parse(localStorage.getItem("user") || "{}").token;
+    const theme = useMantineTheme();
 
     const getFollowingArticles = async () => {
         axios
-            .get(`http://localhost:5000/api/articles/following/${pageOffset}`, {
+            .get(`${baseUrl}/articles/following/${pageOffset}`, {
                 headers: {
                     "x-access-token": token,
                 },
@@ -303,31 +349,49 @@ function FollowingFeeds() {
                 dataLength={followingArticles.length}
                 next={getFollowingArticles}
                 hasMore={hasMore}
-                loader={<h4>Loading...</h4>}
+                loader={[1, 2, 3].map((x) => (
+                    <Grid.Col key={x}>
+                        <ArticleSkeleton />
+                    </Grid.Col>
+                ))}
             >
                 {followingArticles.map((article) => (
                     <Grid.Col key={article._id}>
                         <ArticleCard
                             key={article._id}
-                            _id={article._id}
-                            title={article.title}
-                            image={article.image}
-                            author={article.author}
-                            description={article.description}
-                            lastUpdated={article.lastUpdated}
-                            slug={article.slug}
-                            tags={article.tags}
-                            favoritesCount={article.favoritesCount}
-                            favorited={article.favorited}
-                            bookmarked={article.bookmarked}
-                            own={article.own}
+                            article={{
+                                ...article,
+                                editable: false,
+                            }}
                             setArticleId={() => ""}
                             setArticles={setFollowingArticles}
-                            editable={false}
                         />
                     </Grid.Col>
                 ))}
             </InfiniteScroll>
+            {followingArticles.length === 0 && (
+                <>
+                    {" "}
+                    <Grid.Col>
+                        <Center>
+                            <News
+                                size={60}
+                                strokeWidth={2}
+                                color={
+                                    theme.colorScheme === "dark"
+                                        ? "white"
+                                        : "black"
+                                }
+                            />
+                        </Center>
+                    </Grid.Col>
+                    <Grid.Col>
+                        <Title order={3} align="center">
+                            Let's start by following some authors
+                        </Title>
+                    </Grid.Col>
+                </>
+            )}
         </Grid>
     );
 }

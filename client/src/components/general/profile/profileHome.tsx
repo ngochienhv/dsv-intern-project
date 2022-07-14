@@ -2,10 +2,11 @@ import { Container, MediaQuery, Grid, Center, Skeleton } from "@mantine/core";
 import { useShallowEffect } from "@mantine/hooks";
 import ArticleCard from "../article/articleCard";
 import React, { Dispatch, SetStateAction } from "react";
-import { getUserArticles } from "../others/fetchDataFunctions";
+import { getUserArticles, baseUrl } from "../others/fetchDataFunctions";
 import { Article } from "../../user/editor";
 import { useParams } from "react-router-dom";
 import InfiniteScroll from "react-infinite-scroll-component";
+import ArticleSkeleton from "../skeletons/articlesSkeleton";
 import axios from "axios";
 
 export default function ProfileHome({
@@ -23,16 +24,20 @@ export default function ProfileHome({
     const [pageOffset, setPageOffset] = React.useState<number>(0);
     const [hasMore, setHasMore] = React.useState<boolean>(true);
     const { username } = useParams();
-    const author = other
-        ? username
-        : JSON.parse(localStorage.getItem("user") || "{}").username;
+    const author = username ? username : "";
 
     const getBookmarkArticle = async () => {
         await axios
-            .get(
-                `http://localhost:5000/api/article/bm/${username}/${pageOffset}`
-            )
+            .get(`${baseUrl}/article/bm/${username}/${pageOffset}`, {
+                headers: {
+                    "x-access-token": JSON.parse(
+                        localStorage.getItem("user") || "{}"
+                    ).token,
+                },
+            })
             .then((res) => {
+                console.log(res);
+
                 let tempArticles = articles;
                 tempArticles = tempArticles.concat(res.data);
                 setArticles(tempArticles);
@@ -63,7 +68,7 @@ export default function ProfileHome({
     }, [pageOffset]);
 
     return (
-        <Container>
+        <Container size="lg">
             <MediaQuery smallerThan="xs" styles={{ padding: 0 }}>
                 <Center>
                     <MediaQuery smallerThan="xs" styles={{ padding: 0 }}>
@@ -73,7 +78,11 @@ export default function ProfileHome({
                                 onScroll={(e) => e.preventDefault()}
                                 next={() => setPageOffset((c) => c + 1)}
                                 hasMore={hasMore}
-                                loader={<h4>Loading...</h4>}
+                                loader={[1, 2, 3].map((x) => (
+                                    <Grid.Col key={x}>
+                                        <ArticleSkeleton />
+                                    </Grid.Col>
+                                ))}
                             >
                                 {articles.map((article) => (
                                     <Grid.Col key={article._id}>
@@ -83,27 +92,12 @@ export default function ProfileHome({
                                         >
                                             <ArticleCard
                                                 key={article._id}
-                                                _id={article._id}
-                                                title={article.title}
-                                                image={article.image}
-                                                author={article.author}
-                                                description={
-                                                    article.description
-                                                }
-                                                lastUpdated={
-                                                    article.lastUpdated
-                                                }
-                                                slug={article.slug}
-                                                tags={article.tags}
-                                                favoritesCount={
-                                                    article.favoritesCount
-                                                }
-                                                favorited={article.favorited}
-                                                bookmarked={article.bookmarked}
-                                                own={tab === "home" && !other}
+                                                article={{
+                                                    ...article,
+                                                    editable: false,
+                                                }}
                                                 setArticleId={() => ""}
                                                 setArticles={setArticles}
-                                                editable={false}
                                             />
                                         </Skeleton>
                                     </Grid.Col>

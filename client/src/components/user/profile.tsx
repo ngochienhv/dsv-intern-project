@@ -37,6 +37,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import Notifications from "../general/others/notification";
 import FollowBtns from "../general/profile/followBtns";
+import { baseUrl } from "../general/others/fetchDataFunctions";
 
 type Props = {
     other: boolean;
@@ -48,7 +49,9 @@ type profile = {
     description: string;
     bio: string;
     followers: Object[];
+    followersCount: number;
     following: Object[];
+    followingCount: number;
     bookmarks: Object[];
     firstname: string;
     lastname: string;
@@ -72,11 +75,13 @@ export default function Profile({ other }: Props) {
     const [output, setOutput] = React.useState<string>();
     const [profile, setProfile] = React.useState<profile>({
         username: "",
-        avatar: "",
+        avatar: JSON.parse(localStorage.getItem("user") || "{}").avatar,
         description: "",
         bio: "",
         followers: [],
+        followersCount: 0,
         following: [],
+        followingCount: 0,
         bookmarks: [],
         firstname: "",
         lastname: "",
@@ -86,6 +91,7 @@ export default function Profile({ other }: Props) {
     const [userNotFound, setUserNotFound] = React.useState<boolean>(false);
     const [loading, setLoading] = React.useState<boolean>(true);
     const [followed, setFollowed] = React.useState<boolean>(profile.followed);
+    const [activeTab, setActiveTab] = React.useState<number>(1);
     const { width } = useViewportSize();
     const { username } = useParams();
     useDocumentTitle(profile.lastname + " " + profile.firstname + " - BBlog");
@@ -134,7 +140,6 @@ export default function Profile({ other }: Props) {
 
         // Converting to base64
         const base64Image = canvas.toDataURL("image/jpeg");
-        console.log(base64Image);
 
         setOutput(base64Image);
     };
@@ -142,9 +147,9 @@ export default function Profile({ other }: Props) {
     const getUser = async () => {
         let url = "";
         if (other) {
-            url = `http://localhost:5000/api/profiles/${username}`;
+            url = `${baseUrl}/profiles/${username}`;
         } else {
-            url = "http://localhost:5000/api/user";
+            url = baseUrl + "/user";
         }
 
         await axios
@@ -171,45 +176,59 @@ export default function Profile({ other }: Props) {
     };
 
     const handleChangeAvatar = async () => {
+        const formData = new FormData();
+        let img = output?.split(",")[1];
+        formData.append("image", img as string);
         await axios
             .post(
-                "http://localhost:5000/api/user/change_avatar",
-                {
-                    avatar: output,
-                },
-                {
-                    headers: {
-                        "x-access-token": JSON.parse(
-                            localStorage.getItem("user") || "{}"
-                        ).token,
-                    },
-                }
+                `https://api.imgbb.com/1/upload?key=${process.env.REACT_APP_IMGSV_API_KEY}`,
+                formData
             )
-            .then(async (response) => {
-                console.log(response);
-                if (response.status === 200) {
-                    setNoti(true);
-                    setNotiMessage(response.data);
-                    setNotiStatus("success");
-                    const newAvatar = output?.split(",")[1];
-                    let tempProfile = profile;
-                    if (tempProfile) {
-                        tempProfile.avatar = newAvatar || "";
-                    }
-                    setProfile(tempProfile);
-                    const tempUser = await JSON.parse(
-                        localStorage.getItem("user") || "{}"
-                    );
-                    tempUser.avatar = newAvatar || "";
-                    localStorage.setItem("user", JSON.stringify(tempUser));
-                }
+            .then((response) => {
+                let newAva = response.data.data.url;
+                axios
+                    .post(
+                        baseUrl + "/user/change_avatar",
+                        {
+                            avatar: response.data.data.url,
+                        },
+                        {
+                            headers: {
+                                "x-access-token": JSON.parse(
+                                    localStorage.getItem("user") || "{}"
+                                ).token,
+                            },
+                        }
+                    )
+                    .then((response) => {
+                        console.log(response);
+                        if (response.status === 200) {
+                            setNoti(true);
+                            setNotiMessage(response.data);
+                            setNotiStatus("success");
+                            let tempProfile = profile;
+                            if (tempProfile) {
+                                tempProfile.avatar = newAva;
+                            }
+                            setProfile(tempProfile);
+                            const tempUser = JSON.parse(
+                                localStorage.getItem("user") || "{}"
+                            );
+                            tempUser.avatar = newAva;
+                            localStorage.setItem(
+                                "user",
+                                JSON.stringify(tempUser)
+                            );
+                        }
+                    })
+                    .catch((error) => {
+                        console.log(error);
+                        setNoti(true);
+                        setNotiStatus("fail");
+                        setNotiMessage(error.response.data);
+                    });
             })
-            .catch((error) => {
-                console.log(error);
-                setNoti(true);
-                setNotiStatus("fail");
-                setNotiMessage(error.response.data);
-            });
+            .catch((error) => console.log(error));
     };
 
     const handleUpdateProfile = async (values: {
@@ -220,7 +239,7 @@ export default function Profile({ other }: Props) {
         bio: string | undefined;
     }) => {
         await axios
-            .put("http://localhost:5000/api/user", values, {
+            .put(baseUrl + "/user", values, {
                 headers: {
                     "x-access-token": JSON.parse(
                         localStorage.getItem("user") || "{}"
@@ -299,7 +318,8 @@ export default function Profile({ other }: Props) {
 
     useShallowEffect(() => {
         getUser();
-    }, []);
+        setActiveTab(0);
+    }, [username]);
 
     return (
         <AppShell
@@ -311,7 +331,7 @@ export default function Profile({ other }: Props) {
             navbar={undefined}
             footer={undefined}
         >
-            <Container size="md" p={width < 768 ? 0 : ""}>
+            <Container size="lg" p={width < 768 ? 0 : ""}>
                 {!userNotFound ? (
                     <Grid>
                         <Grid.Col>
@@ -324,7 +344,7 @@ export default function Profile({ other }: Props) {
                                     <Avatar
                                         radius={50}
                                         size="xl"
-                                        src={`data:image/jpeg;base64,${profile.avatar}`}
+                                        src={profile.avatar}
                                     />
                                 </Skeleton>
                                 <Modal
@@ -348,7 +368,6 @@ export default function Profile({ other }: Props) {
                                                 onChange={(c) => setCrop(c)}
                                                 onComplete={cropImage}
                                                 keepSelection={false}
-                                                circularCrop={true}
                                             >
                                                 {file && (
                                                     <Image
@@ -557,40 +576,42 @@ export default function Profile({ other }: Props) {
                             </Group>
                         </Grid.Col>
                         <Grid.Col>
-                            {!editDescript ? (
-                                <Skeleton visible={loading} width="auto">
-                                    <Text>
-                                        {profile?.description
-                                            ? profile.description
-                                            : profile.own
-                                            ? "Describe a little about yourself!"
-                                            : ""}
-                                    </Text>
-                                </Skeleton>
-                            ) : (
-                                <Textarea
-                                    label="Description"
-                                    autosize={true}
-                                    {...form.getInputProps("description")}
-                                />
-                            )}
-                            <Transition
-                                mounted={edit}
-                                transition="fade"
-                                duration={400}
-                                timingFunction="ease"
-                            >
-                                {(styles) => (
-                                    <ActionIcon
-                                        style={styles}
-                                        onClick={() =>
-                                            setEditDescript(!editDescript)
-                                        }
-                                    >
-                                        <Edit size={22} strokeWidth={2} />
-                                    </ActionIcon>
+                            <Group grow>
+                                {!editDescript ? (
+                                    <Skeleton visible={loading} width="auto">
+                                        <Text>
+                                            {profile?.description
+                                                ? profile.description
+                                                : profile.own
+                                                ? "Describe a little about yourself!"
+                                                : ""}
+                                        </Text>
+                                    </Skeleton>
+                                ) : (
+                                    <Textarea
+                                        label="Description"
+                                        autosize={true}
+                                        {...form.getInputProps("description")}
+                                    />
                                 )}
-                            </Transition>
+                                <Transition
+                                    mounted={edit}
+                                    transition="fade"
+                                    duration={400}
+                                    timingFunction="ease"
+                                >
+                                    {(styles) => (
+                                        <ActionIcon
+                                            style={styles}
+                                            onClick={() =>
+                                                setEditDescript(!editDescript)
+                                            }
+                                        >
+                                            <Edit size={22} strokeWidth={2} />
+                                        </ActionIcon>
+                                    )}
+                                </Transition>
+                            </Group>
                             <Group position="right">
                                 {edit ? (
                                     <>
@@ -629,8 +650,8 @@ export default function Profile({ other }: Props) {
                             </Group>
                         </Grid.Col>
                         <Grid.Col p={width < 768 ? 0 : ""}>
-                            <Tabs>
-                                <Tabs.Tab label="Posts">
+                            <Tabs active={activeTab} onTabChange={setActiveTab}>
+                                <Tabs.Tab label="Posts" tabKey="First">
                                     <ProfileHome
                                         tab="home"
                                         loading={loading}
@@ -638,7 +659,7 @@ export default function Profile({ other }: Props) {
                                         other={!profile.own}
                                     />
                                 </Tabs.Tab>
-                                <Tabs.Tab label="Bookmarks">
+                                <Tabs.Tab label="Bookmarks" tabKey="Second">
                                     <ProfileHome
                                         tab="bookmarks"
                                         loading={loading}
@@ -646,7 +667,7 @@ export default function Profile({ other }: Props) {
                                         other={!profile.own}
                                     />
                                 </Tabs.Tab>
-                                <Tabs.Tab label="About">
+                                <Tabs.Tab label="About" tabKey="Third">
                                     <ProfileAbout
                                         profile={profile}
                                         other={!profile.own}

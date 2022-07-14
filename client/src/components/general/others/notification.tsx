@@ -1,6 +1,6 @@
 import React, { Dispatch, SetStateAction } from "react";
 import { Modal, Alert } from "@mantine/core";
-import { CircleCheck } from "tabler-icons-react";
+import { AlertCircle, CircleCheck } from "tabler-icons-react";
 
 type Props = {
     noti: boolean;
@@ -15,9 +15,6 @@ export default function Notifications({
     notiStatus,
     notiMessage,
 }: Props) {
-    React.useEffect(() => {
-        console.log(notiStatus);
-    }, [noti]);
     return (
         <Modal
             opened={noti}
@@ -29,7 +26,13 @@ export default function Notifications({
             padding={0}
         >
             <Alert
-                icon={<CircleCheck size={16} />}
+                icon={
+                    notiStatus === "success" ? (
+                        <CircleCheck size={16} />
+                    ) : (
+                        <AlertCircle size={16} />
+                    )
+                }
                 withCloseButton={true}
                 onClose={() => setNoti(false)}
                 title={notiStatus + "!"}

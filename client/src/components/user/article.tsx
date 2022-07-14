@@ -18,6 +18,7 @@ import SmallArticleCard from "../general/article/smallArticleCard";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { MoodSad } from "tabler-icons-react";
+import { baseUrl } from "../general/others/fetchDataFunctions";
 
 export interface Post {
     _id: string;
@@ -76,10 +77,10 @@ export default function Article() {
     });
     const { width } = useViewportSize();
     const { id } = useParams();
-    useDocumentTitle(article.title);
+    useDocumentTitle(article.title + " - BBlog");
     const getArticle = async () => {
         await axios
-            .get(`http://localhost:5000/api/article?articleId=${id}`, {
+            .get(`${baseUrl}/article?articleId=${id}`, {
                 headers: {
                     "x-access-token": JSON.parse(
                         localStorage.getItem("user") || "{}"
@@ -124,7 +125,7 @@ export default function Article() {
                 <Grid.Col>
                     <CommentSection />
                 </Grid.Col>
-                {width < 900 ? (
+                {width < 1200 ? (
                     <Grid.Col>
                         <Title order={5}>More of Hien Nguyen</Title>
                         <Space h="md" />
@@ -132,11 +133,18 @@ export default function Article() {
                             <Grid>
                                 {article.otherArticles.length > 0 ? (
                                     article.otherArticles.map((post) => (
-                                        <Grid.Col>
+                                        <Grid.Col
+                                            key={post._id}
+                                            lg={6}
+                                            md={6}
+                                            sm={6}
+                                        >
                                             <SmallArticleCard
                                                 author={article.author}
-                                                article={post}
-                                                own={article.own}
+                                                _id={post._id}
+                                                title={post.title}
+                                                slug={post.slug}
+                                                lastUpdated={post.lastUpdated}
                                             />
                                         </Grid.Col>
                                     ))

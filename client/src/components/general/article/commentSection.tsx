@@ -13,6 +13,7 @@ import React from "react";
 import Comment from "./comment";
 import { Link, useParams } from "react-router-dom";
 import Notifications from "../others/notification";
+import { baseUrl } from "../others/fetchDataFunctions";
 
 export type comment = {
     _id: string;
@@ -43,7 +44,7 @@ export default function CommentSection() {
         if (newCmt.length > 0) {
             axios
                 .post(
-                    `http://localhost:5000/api/article/${id}/comment`,
+                    `${baseUrl}/article/${id}/comment`,
                     { content: newCmt },
                     {
                         headers: {
@@ -73,7 +74,7 @@ export default function CommentSection() {
             localStorage.getItem("user") || "{}"
         ).username;
         axios
-            .get(`http://localhost:5000/api/article/${id}/${username}/comment`)
+            .get(`${baseUrl}/article/${id}/${username}/comment`)
             .then((response) => {
                 console.log(response.data);
                 if (response.status === 200) {

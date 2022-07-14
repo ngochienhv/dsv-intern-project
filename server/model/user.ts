@@ -1,9 +1,32 @@
 import { User } from "./models";
+import { user } from "./typesDef";
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const path = require("path");
 const shortid = require("shortid");
+const { OAuth2Client } = require("google-auth-library");
 require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
+
+// const client = new OAuth2Client(
+//     "186405993485-66lcpstbso7gdl14jj99dpuj45pvrth5.apps.googleusercontent.com"
+// );
+// async function verify() {
+//     const ticket = await client.verifyIdToken({
+//         idToken:
+//             "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFiZDY4NWY1ZThmYzYyZDc1ODcwNWMxZWIwZThhNzUyNGM0NzU5NzUiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJuYmYiOjE2NTc3MDYwOTYsImF1ZCI6IjE4NjQwNTk5MzQ4NS02NmxjcHN0YnNvN2dkbDE0amo5OWRwdWo0NXB2cnRoNS5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsInN1YiI6IjExMDQyMzc0Nzg5NDE0MDU2MDEzMiIsImVtYWlsIjoibmdvY2hpZW4xMjNodkBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXpwIjoiMTg2NDA1OTkzNDg1LTY2bGNwc3Ric283Z2RsMTRqajk5ZHB1ajQ1cHZydGg1LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwibmFtZSI6Ikhp4buDbiBOZ3V54buFbiBOZ-G7jWMiLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUl0YnZtbTBwYnQ5amMwWnZCX3RkWkVUWUhUQjhzU1F4MDd3VE9jNkxKYkk9czk2LWMiLCJnaXZlbl9uYW1lIjoiSGnhu4NuIiwiZmFtaWx5X25hbWUiOiJOZ3V54buFbiBOZ-G7jWMiLCJpYXQiOjE2NTc3MDYzOTYsImV4cCI6MTY1NzcwOTk5NiwianRpIjoiNjRjZGZjOWRiMGE1ODc0MmU2NmNlOGZkMWJiMzA0Y2Q0NjU4MGQyOCJ9.JefduKmtizqJadZ8qM5dxENDR9N3l9vr8151FOaRJell4GEHCtUJhFNEM0st84Bp8iCor2HMgL_wx_Wc8iOImkIlNrHQEkMXvNqXXzacmXelMFkJSKGX0Vx4M5AjZCEQFNoUDEwxQa9HSHpk59lali6fAqKcgr8nMWFLkOeyBZZfVfrvg3gAc35dbFVuzjlDhv6CoWKsjBAooJspvjHGXp-pqEwVfSWXOL42Xo5KMalpk2iR8pkVdK0soA3XtghkRjCdWrPkx2SY--eTpHDTqiqaoKUFQGjb-0BhiOyMhsL8rM1evAZE1Olq4FeG9GbsV_gECXGUayKsSlymyy74Jw",
+//         audience:
+//             "186405993485-66lcpstbso7gdl14jj99dpuj45pvrth5.apps.googleusercontent.com", // Specify the CLIENT_ID of the app that accesses the backend
+//         // Or, if multiple clients access the backend:
+//         //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
+//     });
+//     const payload = ticket.getPayload();
+//     const userid = payload["sub"];
+//     // If request specified a G Suite domain:
+//     // const domain = payload['hd'];
+//     console.log(payload);
+//     console.log(userid);
+// }
+// verify().catch(console.error);
 
 const verifyToken = async (token: string) => {
     let userId = "";
@@ -70,9 +93,7 @@ exports.userSignUp = async function (body: {
                 name:
                     newUser.profile.lastname + " " + newUser.profile.firstname,
                 token: newUser.token,
-                avatar: newUser.profile.avatar
-                    ? newUser.profile.avatar.toString("base64")
-                    : "",
+                avatar: newUser.profile.avatar,
                 username: newUser.username,
             },
         };
@@ -107,9 +128,7 @@ exports.userSignIn = async function (body: {
                     email: user.email,
                     name: user.profile.lastname + " " + user.profile.firstname,
                     token: user.token,
-                    avatar: user.profile.avatar
-                        ? user.profile.avatar.toString("base64")
-                        : "",
+                    avatar: user.profile.avatar,
                     username: user.username,
                 },
             };
@@ -131,13 +150,11 @@ exports.changeAvatar = async function (
     avatar: string
 ) {
     const { user_id } = user;
-    let avaBuffer = Buffer.from(avatar.split(",")[1], "base64");
 
     let res = {};
-
     await User.findOne({ _id: user_id })
         .then((doc) => {
-            doc.profile.avatar = avaBuffer;
+            doc.profile.avatar = avatar;
             doc.save();
             res = {
                 status: "success",
@@ -173,9 +190,7 @@ exports.getUser = async function (user: {
             body: {
                 ...doc.profile,
                 username: doc.username,
-                avatar: doc.profile.avatar
-                    ? doc.profile.avatar.toString("base64")
-                    : "",
+                avatar: doc.profile.avatar,
                 own: true,
                 followersCount: doc.profile.followers.length,
                 followingCount: doc.profile.following.length,
@@ -259,9 +274,7 @@ exports.getProfile = async function (token: string, username: string) {
             body: {
                 ...user.profile,
                 username: user.username,
-                avatar: user.profile.avatar
-                    ? user.profile.avatar.toString("base64")
-                    : "",
+                avatar: user.profile.avatar,
                 followed:
                     user_id.length > 0 &&
                     user.profile.followers.indexOf(user_id) > -1,
@@ -362,5 +375,97 @@ exports.unFollowUser = async function (
             };
         });
 
+    return res;
+};
+
+exports.getFollowers = async function (
+    token: string,
+    username: string,
+    pageOffset: number
+) {
+    let res = {};
+    let user_id = "";
+    if (token) {
+        user_id = await verifyToken(token);
+    }
+    let perPage = 6,
+        page = Math.max(0, pageOffset);
+
+    await User.findOne({ username: username })
+        .populate("profile.followers")
+        .then((user) => {
+            res = {
+                status: "success",
+                message: "Get followers successfully!",
+                body: user.profile.followers
+                    .slice(page * perPage, (page + 1) * perPage)
+                    .map((follower: user) => ({
+                        _id: follower._id,
+                        username: follower.username,
+                        firstname: follower.profile.firstname,
+                        lastname: follower.profile.lastname,
+                        avatar: follower.profile.avatar,
+                        followed:
+                            user_id.length > 0 &&
+                            follower.profile.followers.indexOf(user_id) > -1,
+                        own: user_id === follower._id.toString(),
+                    })),
+            };
+        })
+        .catch((error) => {
+            console.log(error);
+
+            res = {
+                status: "fail",
+                message: "Get followers failed!",
+                body: error,
+            };
+        });
+    return res;
+};
+
+exports.getFollowings = async function (
+    token: string,
+    username: string,
+    pageOffset: number
+) {
+    let res = {};
+    let user_id = "";
+    if (token) {
+        user_id = await verifyToken(token);
+    }
+    let perPage = 6,
+        page = Math.max(0, pageOffset);
+
+    await User.findOne({ username: username })
+        .populate("profile.following")
+        .then((user) => {
+            res = {
+                status: "success",
+                message: "Get followers successfully!",
+                body: user.profile.following
+                    .slice(page * perPage, (page + 1) * perPage)
+                    .map((follower: user) => ({
+                        _id: follower._id,
+                        username: follower.username,
+                        firstname: follower.profile.firstname,
+                        lastname: follower.profile.lastname,
+                        avatar: follower.profile.avatar,
+                        followed:
+                            user_id.length > 0 &&
+                            follower.profile.followers.indexOf(user_id) > -1,
+                        own: user_id === follower._id.toString(),
+                    })),
+            };
+        })
+        .catch((error) => {
+            console.log(error);
+
+            res = {
+                status: "fail",
+                message: "Get followers failed!",
+                body: error,
+            };
+        });
     return res;
 };

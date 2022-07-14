@@ -3,33 +3,35 @@ import {
     Group,
     Avatar,
     Text,
-    Divider,
     Button,
     Paper,
     Title,
     MediaQuery,
     Space,
     Anchor,
+    Popover,
 } from "@mantine/core";
 import axios from "axios";
 import React from "react";
 import { comment } from "./commentSection";
 import { Link } from "react-router-dom";
+import { useModals } from "@mantine/modals";
+import { baseUrl } from "../others/fetchDataFunctions";
 
 export default function Comment({ comment }: { comment: comment }) {
     const [exist, setExists] = React.useState<boolean>(true);
+    const [opened1, setOpened1] = React.useState<boolean>(false);
+    const [opened2, setOpened2] = React.useState<boolean>(false);
+
     const handleDeleteComment = async () => {
         await axios
-            .delete(
-                `http://localhost:5000/api/article/comment?commentId=${comment._id}`,
-                {
-                    headers: {
-                        "x-access-token": JSON.parse(
-                            localStorage.getItem("user") || "{}"
-                        ).token,
-                    },
-                }
-            )
+            .delete(`${baseUrl}/article/comment?commentId=${comment._id}`, {
+                headers: {
+                    "x-access-token": JSON.parse(
+                        localStorage.getItem("user") || "{}"
+                    ).token,
+                },
+            })
             .then((response) => {
                 console.log(response);
                 setExists(false);
@@ -38,6 +40,27 @@ export default function Comment({ comment }: { comment: comment }) {
                 console.log(error);
             });
     };
+
+    const modals = useModals();
+
+    const openDeleteModal = () =>
+        modals.openConfirmModal({
+            title: (
+                <Title order={3} style={{ color: "#f03e3e" }}>
+                    Delete Comment
+                </Title>
+            ),
+            centered: true,
+            children: (
+                <Text size="sm">
+                    Are you sure you want to delete this comment ?
+                </Text>
+            ),
+            labels: { confirm: "Delete", cancel: "Cancel" },
+            confirmProps: { color: "red" },
+            onCancel: () => console.log("Cancel"),
+            onConfirm: () => handleDeleteComment(),
+        });
 
     return exist ? (
         <Grid columns={22} key={comment._id}>
@@ -62,15 +85,15 @@ export default function Comment({ comment }: { comment: comment }) {
                     >
                         <Avatar
                             radius="xl"
-                            src={`data:image/jpeg;base64,${comment.user.avatar}`}
+                            src={comment.user.avatar}
                             alt="avatar"
                             size={35}
                         />
                     </Anchor>
-                    <Divider
+                    {/* <Divider
                         orientation="vertical"
                         style={{ marginLeft: 17, height: "65%" }}
-                    />
+                    /> */}
                 </Grid.Col>
             </MediaQuery>
             <MediaQuery smallerThan="xs" styles={{ maxWidth: "90%" }}>
@@ -113,17 +136,57 @@ export default function Comment({ comment }: { comment: comment }) {
                         <Text>{comment.content}</Text>
                         <Space h="sm" />
                         <Group spacing={2}>
-                            <Button variant="subtle" size="xs">
-                                Like
-                            </Button>
-                            <Button variant="subtle" size="xs">
-                                Reply
-                            </Button>
+                            <Popover
+                                opened={opened1}
+                                onClose={() => setOpened1(false)}
+                                target={
+                                    <Button
+                                        variant="subtle"
+                                        size="xs"
+                                        onClick={() => setOpened1((o) => !o)}
+                                    >
+                                        Like
+                                    </Button>
+                                }
+                                width={260}
+                                position="bottom"
+                                withArrow
+                            >
+                                <div style={{ display: "flex" }}>
+                                    <Text size="sm">
+                                        Feature in development and will be
+                                        updated soon
+                                    </Text>
+                                </div>
+                            </Popover>
+                            <Popover
+                                opened={opened2}
+                                onClose={() => setOpened2(false)}
+                                target={
+                                    <Button
+                                        variant="subtle"
+                                        size="xs"
+                                        onClick={() => setOpened2((o) => !o)}
+                                    >
+                                        Reply
+                                    </Button>
+                                }
+                                width={260}
+                                position="bottom"
+                                withArrow
+                            >
+                                <div style={{ display: "flex" }}>
+                                    <Text size="sm">
+                                        Feature in development and will be
+                                        updated soon
+                                    </Text>
+                                </div>
+                            </Popover>
                             {comment.own && (
                                 <Button
                                     variant="subtle"
                                     color="red"
-                                    onClick={handleDeleteComment}
+                                    onClick={openDeleteModal}
                                     size="xs"
                                 >
                                     Delete

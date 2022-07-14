@@ -71,6 +71,7 @@ exports.getUnpublishedArticle = async function (user: {
 
     let res = {};
     await Article.find({ author: user_id, published: false })
+        .sort({ lastUpdated: -1 })
         .then((articles) => {
             let tempArticles = articles.map(
                 ({ title, author, _id, lastUpdated, content }) => ({
@@ -109,7 +110,11 @@ exports.getPublishedArticle = async function (
     let res = {};
     let perPage = 3,
         page = Math.max(0, pageOffset);
-    const user_id = await verifyToken(token);
+    let user_id = "";
+    if (token) {
+        user_id = await verifyToken(token);
+    }
+
     const authors = await User.findOne({ username: author });
     let author_id = "";
     if (authors) {
@@ -118,6 +123,7 @@ exports.getPublishedArticle = async function (
     await Article.find({ author: author_id, published: true })
         .populate("author")
         .populate("tags")
+        .sort({ lastUpdated: -1 })
         .limit(perPage)
         .skip(perPage * page)
         .then((articles) => {
@@ -140,9 +146,7 @@ exports.getPublishedArticle = async function (
                         _id: author._id,
                         firstname: author.profile.firstname,
                         lastname: author.profile.lastname,
-                        avatar: author.profile.avatar
-                            ? author.profile.avatar.toString("base64")
-                            : "",
+                        avatar: author.profile.avatar,
                     },
                     _id,
                     lastUpdated,
@@ -168,6 +172,7 @@ exports.getPublishedArticle = async function (
                         bookmarked.indexOf(new ObjectId(user_id)) > -1
                             ? true
                             : false,
+                    own: user_id === author._id.toString(),
                     slug,
                 })
             );
@@ -213,6 +218,7 @@ exports.getEditArticle = async function (articleId: string) {
     let res = {};
     await Article.findOne({ _id: articleId })
         .populate("tags")
+        .sort({ lastUpdated: -1 })
         .then((article) => {
             res = {
                 status: "success",
@@ -380,9 +386,7 @@ exports.getArticle = async function (token: string, articleId: string) {
                         _id: article.author._id,
                         firstname: article.author.profile.firstname,
                         lastname: article.author.profile.lastname,
-                        avatar: article.author.profile.avatar
-                            ? article.author.profile.avatar.toString("base64")
-                            : "",
+                        avatar: article.author.profile.avatar,
                         description: article.author.profile.description,
                         followed:
                             userId.length > 0 &&
@@ -518,9 +522,14 @@ exports.bookmarkArticle = async function (
 };
 
 exports.getBookmarkArticle = async function (
+    token: string,
     username: string,
     pageOffset: number
 ) {
+    let user_id = "";
+    if (token) {
+        user_id = await verifyToken(token);
+    }
     let res = {};
     let perPage = 3,
         page = Math.max(0, pageOffset);
@@ -539,6 +548,7 @@ exports.getBookmarkArticle = async function (
                 model: Tag,
             },
         })
+        .sort({ lastUpdated: -1 })
         .limit(perPage)
         .skip(perPage * page)
         .then((user) => {
@@ -563,7 +573,7 @@ exports.getBookmarkArticle = async function (
                             profile: {
                                 firstname: string;
                                 lastname: string;
-                                avatar: Buffer;
+                                avatar: string;
                             };
                         };
                         _id: string;
@@ -585,9 +595,7 @@ exports.getBookmarkArticle = async function (
                             _id: author._id,
                             firstname: author.profile.firstname,
                             lastname: author.profile.lastname,
-                            avatar: author.profile.avatar
-                                ? author.profile.avatar.toString("base64")
-                                : "",
+                            avatar: author.profile.avatar,
                         },
                         _id,
                         lastUpdated,
@@ -604,8 +612,15 @@ exports.getBookmarkArticle = async function (
                               image.toString("base64")
                             : null,
                         favoritesCount: favorited.length,
-                        favorited: favorited.indexOf(user._id) > -1,
-                        bookmarked: bookmarked.indexOf(user._id) > -1,
+                        favorited:
+                            user_id.length > 0 &&
+                            favorited.indexOf(new ObjectId(user_id)) > -1,
+                        bookmarked:
+                            user_id.length > 0 &&
+                            bookmarked.indexOf(new ObjectId(user_id)) > -1,
+                        own:
+                            user_id.length > 0 &&
+                            user_id === author._id.toString(),
                         slug,
                     })
                 );
@@ -636,6 +651,7 @@ exports.globalFeeds = async function (token: string, pageOffset: number) {
     await Article.find({ published: true })
         .populate("author")
         .populate("tags")
+        .sort({ lastUpdated: -1 })
         .limit(perPage)
         .skip(perPage * page)
         .then((articles) => {
@@ -658,9 +674,7 @@ exports.globalFeeds = async function (token: string, pageOffset: number) {
                         _id: author._id,
                         firstname: author.profile.firstname,
                         lastname: author.profile.lastname,
-                        avatar: author.profile.avatar
-                            ? author.profile.avatar.toString("base64")
-                            : "",
+                        avatar: author.profile.avatar,
                     },
                     _id,
                     lastUpdated,
@@ -719,7 +733,10 @@ exports.getFollowingPosts = async function (token: string, pageOffset: number) {
     let res = {};
     await User.findOne({ _id: user_id })
         .then(async (user) => {
-            await Article.find({ author: { $in: user.profile.following } })
+            await Article.find({
+                author: { $in: user.profile.following },
+                published: true,
+            })
                 .populate("author")
                 .populate("tags")
                 .limit(perPage)
@@ -744,9 +761,7 @@ exports.getFollowingPosts = async function (token: string, pageOffset: number) {
                                 _id: author._id,
                                 firstname: author.profile.firstname,
                                 lastname: author.profile.lastname,
-                                avatar: author.profile.avatar
-                                    ? author.profile.avatar.toString("base64")
-                                    : "",
+                                avatar: author.profile.avatar,
                             },
                             _id,
                             lastUpdated,
@@ -801,6 +816,7 @@ exports.getFollowingPosts = async function (token: string, pageOffset: number) {
 };
 
 exports.getTrendingArticle = async function () {
+    let res = {};
     await Article.aggregate([
         {
             $project: {
@@ -812,7 +828,215 @@ exports.getTrendingArticle = async function () {
                 bookmarkedCount: { $size: "$bookmarked" },
             },
         },
+        {
+            $lookup: {
+                from: "users",
+                localField: "author",
+                foreignField: "_id",
+                as: "author",
+            },
+        },
         { $sort: { favoriteCount: -1, bookmarkedCount: -1 } },
         { $limit: 6 },
-    ]).then((res) => console.log(res));
+    ])
+        .then((articles) => {
+            let tempArticles = articles.map(
+                (article: {
+                    _id: string;
+                    title: string;
+                    slug: string;
+                    lastUpdated: string;
+                    author: {
+                        username: string;
+                        _id: string;
+                        profile: {
+                            firstname: string;
+                            lastname: string;
+                            avatar: string;
+                        };
+                    }[];
+                }) => {
+                    return {
+                        _id: article._id,
+                        title: article.title,
+                        slug: article.slug,
+                        lastUpdated: article.lastUpdated,
+                        author: {
+                            username: article.author[0].username,
+                            _id: article.author[0]._id,
+                            firstname: article.author[0].profile.firstname,
+                            lastname: article.author[0].profile.lastname,
+                            avatar: article.author[0].profile.avatar,
+                        },
+                    };
+                }
+            );
+            res = {
+                status: "success",
+                message: "Get popular articles successfully!",
+                body: tempArticles,
+            };
+        })
+        .catch((err) => {
+            res = {
+                status: "fail",
+                message: "Get popular articles fail!",
+                body: err,
+            };
+        });
+
+    return res;
+};
+
+exports.searchArticlesByTitle = async function (
+    token: string,
+    searchString: string
+) {
+    let user_id = "";
+    if (token) {
+        user_id = await verifyToken(token);
+    }
+    if (searchString.length === 0) {
+        return { status: "fail", message: "Search failed!", body: [] };
+    }
+    let regex = new RegExp(
+        searchString.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        "i"
+    );
+    let resArr1: Array<any> = [];
+    let resArr2: Array<any> = [];
+    await Article.aggregate([
+        {
+            $match: {
+                $and: [
+                    {
+                        title: { $regex: regex },
+                    },
+                    { published: true },
+                ],
+            },
+        },
+        {
+            $project: {
+                title: 1,
+                author: 1,
+                slug: 1,
+                lastUpdated: 1,
+                favoriteCount: { $size: "$favorited" },
+                bookmarkedCount: { $size: "$bookmarked" },
+                description: 1,
+                image: 1,
+                tags: 1,
+                favorited: 1,
+                bookmarked: 1,
+            },
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "author",
+                foreignField: "_id",
+                as: "author",
+            },
+        },
+        {
+            $lookup: {
+                from: "tags",
+                localField: "tags",
+                foreignField: "_id",
+                as: "tags",
+            },
+        },
+    ]).then((articles) => {
+        resArr1 = articles;
+    });
+
+    await Article.aggregate([
+        {
+            $match: {
+                $and: [
+                    {
+                        $text: { $search: searchString },
+                    },
+                    { published: true },
+                ],
+            },
+        },
+        {
+            $project: {
+                title: 1,
+                author: 1,
+                slug: 1,
+                lastUpdated: 1,
+                favoriteCount: { $size: "$favorited" },
+                bookmarkedCount: { $size: "$bookmarked" },
+                description: 1,
+                image: 1,
+                tags: 1,
+                favorited: 1,
+                bookmarked: 1,
+            },
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "author",
+                foreignField: "_id",
+                as: "author",
+            },
+        },
+        {
+            $lookup: {
+                from: "tags",
+                localField: "tags",
+                foreignField: "_id",
+                as: "tags",
+            },
+        },
+    ])
+        .then((articles) => {
+            resArr2 = articles;
+        })
+        .catch((err) => console.log(err));
+
+    let arr = resArr1.concat(resArr2);
+    const res = [
+        ...new Map(arr.map((item) => [item["_id"].toString(), item])).values(),
+    ];
+
+    return {
+        status: "success",
+        message: "Search successfully!",
+        body: res.map((article) => ({
+            title: article.title,
+            author: {
+                username: article.author[0].username,
+                _id: article.author[0]._id,
+                firstname: article.author[0].profile.firstname,
+                lastname: article.author[0].profile.lastname,
+                avatar: article.author[0].profile.avatar,
+            },
+            _id: article._id,
+            lastUpdated: article.lastUpdated,
+            description: article.description,
+            tags: article.tags.map(
+                (tag: { _id: string; name: string; articles: string[] }) =>
+                    tag.name
+            ),
+            image: article.image
+                ? "data:image/jpeg;base64," + article.image.toString("base64")
+                : null,
+            favoritesCount: article.favorited.length,
+            favorited:
+                user_id.length > 0 &&
+                article.favorited.indexOf(new ObjectId(user_id)) > -1,
+            bookmarked:
+                user_id.length > 0 &&
+                article.bookmarked.indexOf(new ObjectId(user_id)) > -1,
+            slug: article.slug,
+            own:
+                user_id.length > 0 &&
+                user_id === article.author[0]._id.toString(),
+        })),
+    };
 };

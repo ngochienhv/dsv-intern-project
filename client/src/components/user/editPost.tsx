@@ -71,6 +71,27 @@ export default function NewPost() {
         },
     });
 
+    const handleImageUpload = (file: File): Promise<string> =>
+        new Promise((resolve, reject) => {
+            console.log(file);
+
+            const formData = new FormData();
+            formData.append("image", file);
+
+            fetch(
+                `https://api.imgbb.com/1/upload?key=${process.env.REACT_APP_IMGSV_API_KEY}`,
+                {
+                    method: "POST",
+                    body: formData,
+                }
+            )
+                .then((response) => response.json())
+                .then((result) => {
+                    resolve(result.data.url);
+                })
+                .catch(() => reject(new Error("Upload failed")));
+        });
+
     useDocumentTitle(
         form.values.title
             ? form.values.title.length > 0
@@ -103,7 +124,7 @@ export default function NewPost() {
                 notiStatus={notiStatus}
                 notiMessage={notiMessage}
             />
-            <Container size="lg">
+            <Container size="xl">
                 <Grid>
                     <Grid.Col>
                         <Title order={4}>
@@ -146,6 +167,11 @@ export default function NewPost() {
                                         form.setFieldValue("content", value);
                                         setShowDialog(true);
                                     }}
+                                    sticky
+                                    stickyOffset={50}
+                                    onImageUpload={(file) =>
+                                        handleImageUpload(file)
+                                    }
                                 />
                             </TypographyStylesProvider>
                         ) : (

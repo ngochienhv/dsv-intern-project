@@ -1,5 +1,6 @@
 import { ObjectId } from "mongodb";
 import * as mongoose from "mongoose";
+import { Db } from "mongodb";
 
 const articleSchema = new mongoose.Schema({
     slug: { type: String, default: "" },
@@ -23,7 +24,7 @@ const userSchema = new mongoose.Schema({
     profile: {
         firstname: { type: String },
         lastname: { type: String },
-        avatar: { type: Buffer, default: null },
+        avatar: { type: String, default: null },
         description: { type: String, default: null },
         bio: { type: String, default: null },
         followers: [{ type: ObjectId, default: null, ref: "User" }],
@@ -107,6 +108,8 @@ commentSchema.pre(
             });
     }
 );
+
+articleSchema.index({ title: "text" });
 
 export const User = mongoose.model("User", userSchema);
 

@@ -191,47 +191,18 @@ export default function Editor() {
                                                                 key={
                                                                     article._id
                                                                 }
-                                                                _id={
-                                                                    article._id
-                                                                }
-                                                                title={
-                                                                    article.title
-                                                                }
-                                                                image={
-                                                                    article.image
-                                                                }
-                                                                author={
-                                                                    article.author
-                                                                }
-                                                                description={
-                                                                    article.description
-                                                                }
-                                                                lastUpdated={
-                                                                    article.lastUpdated
-                                                                }
-                                                                slug={
-                                                                    article.slug
-                                                                }
-                                                                tags={
-                                                                    article.tags
-                                                                }
-                                                                favoritesCount={
-                                                                    article.favoritesCount
-                                                                }
-                                                                favorited={
-                                                                    false
-                                                                }
-                                                                bookmarked={
-                                                                    article.bookmarked
-                                                                }
-                                                                own={true}
+                                                                article={{
+                                                                    ...article,
+                                                                    editable:
+                                                                        true,
+                                                                    own: true,
+                                                                }}
                                                                 setArticleId={
                                                                     setArticleId
                                                                 }
                                                                 setArticles={
                                                                     setPublishedArticles
                                                                 }
-                                                                editable={true}
                                                             />
                                                         </Skeleton>
                                                     </Grid.Col>

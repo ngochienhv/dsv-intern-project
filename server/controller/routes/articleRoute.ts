@@ -13,7 +13,8 @@ const BookmarkArticleAPI = require("../article/bookmarkArticleAPI");
 const GetBookmarkedArticleAPI = require("../article/getBookmarkedArticleAPI");
 const GlobalFeedsAPI = require("../article/globalFeedsAPI");
 const GetFollowingArticlesAPI = require("../article/getFollowingArticlesAPI");
-const { getTrendingArticle } = require("../../model/article");
+const GetTrendingArticlesAPI = require("../article/getTrendingArticlesAPI");
+const SearchArticlesByTitleAPI = require("../article/searchArticlesByTitleAPI");
 
 router.post("/articles", auth, function (req, res) {
     /* token required */
@@ -99,7 +100,11 @@ router.get("/articles/following/:page", function (req, res) {
 
 router.get("/articles/trending", function (req, res) {
     /* token optional */
-    getTrendingArticle(req, res);
+    GetTrendingArticlesAPI(req, res);
+});
+
+router.get("/articles/search", function (req, res) {
+    SearchArticlesByTitleAPI(req, res);
 });
 
 module.exports = router;

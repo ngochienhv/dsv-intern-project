@@ -3,6 +3,8 @@
     margin-left: auto;
     margin-right: auto;
     margin-bottom: 30px;
+    height: fit-content;
+    max-width: 90%;
 }
 
 .article-content blockquote {

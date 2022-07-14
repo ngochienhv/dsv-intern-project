@@ -17,12 +17,14 @@ interface EditArticle {
     title: string | null;
 }
 
+export const baseUrl = process.env.REACT_APP_BASE_URL;
+
 export const handleCreateArticle = async (
     setArticleId: Dispatch<SetStateAction<string>>
 ) => {
     await axios
         .post(
-            "http://localhost:5000/api/articles",
+            baseUrl + "/articles",
             {},
             {
                 headers: {
@@ -49,12 +51,10 @@ export const getUserArticles = async (
     pageOffset: number,
     setHasMore: Dispatch<SetStateAction<boolean>>
 ) => {
-    console.log(pageOffset);
-
     if (typ === "published") {
         await axios
             .get(
-                `http://localhost:5000/api/articles/published/${pageOffset}?author=${author}`,
+                `${baseUrl}/articles/published/${pageOffset}?author=${author}`,
                 {
                     headers: {
                         "x-access-token": JSON.parse(
@@ -77,7 +77,7 @@ export const getUserArticles = async (
             });
     } else {
         await axios
-            .get(`http://localhost:5000/api/articles/unpublished`, {
+            .get(`${baseUrl}/articles/unpublished`, {
                 headers: {
                     "x-access-token": JSON.parse(
                         localStorage.getItem("user") || "{}"
@@ -102,7 +102,7 @@ export const getOthersArticles = async (
     setLoading: Dispatch<SetStateAction<boolean>>
 ) => {
     await axios
-        .get(`http://localhost:5000/api/articles/${username}`)
+        .get(`${baseUrl}/articles/${username}`)
         .then((res) => {
             console.log(res);
             setArticles(res.data);
@@ -120,7 +120,7 @@ export const getEditArticle = async (
     setLoading: Dispatch<SetStateAction<boolean>>
 ) => {
     await axios
-        .get(`http://localhost:5000/api/articles?articleId=${article_id}`, {
+        .get(`${baseUrl}/articles?articleId=${article_id}`, {
             headers: {
                 "x-access-token": JSON.parse(
                     localStorage.getItem("user") || "{}"
@@ -146,7 +146,7 @@ export const handleUpdateArticle = async (
     setNotiStatus: Dispatch<SetStateAction<string>>
 ) => {
     await axios
-        .put("http://localhost:5000/api/articles", form.values, {
+        .put(baseUrl + "/articles", form.values, {
             headers: {
                 "x-access-token": JSON.parse(
                     localStorage.getItem("user") || "{}"
@@ -181,7 +181,7 @@ export const handleDeleteArticle = async (
     setArticles: Dispatch<SetStateAction<Article[]>>
 ) => {
     await axios
-        .delete(`http://localhost:5000/api/articles?articleId=${id}`, {
+        .delete(`${baseUrl}/articles?articleId=${id}`, {
             headers: {
                 "x-access-token": JSON.parse(
                     localStorage.getItem("user") || "{}"
@@ -204,55 +204,5 @@ export const handleDeleteArticle = async (
             setNoti(true);
             setNotiStatus("fail");
             setNotiMessage("Delete article failed!");
-        });
-};
-
-export const handleFollowUser = async (
-    username: string,
-    setFollowed: Dispatch<SetStateAction<boolean>>
-) => {
-    await axios
-        .post(
-            `http://localhost:5000/api/profiles/${username}/follow`,
-            {},
-            {
-                headers: {
-                    "x-access-token": JSON.parse(
-                        localStorage.getItem("user") || "{}"
-                    ).token,
-                },
-            }
-        )
-        .then((response) => {
-            console.log(response);
-            if (response.status === 200) {
-                setFollowed(true);
-            }
-        })
-        .catch((error) => {
-            console.log(error);
-        });
-};
-
-export const handleUnFollowUser = async (
-    username: string,
-    setFollowed: Dispatch<SetStateAction<boolean>>
-) => {
-    await axios
-        .delete(`http://localhost:5000/api/profiles/${username}/follow`, {
-            headers: {
-                "x-access-token": JSON.parse(
-                    localStorage.getItem("user") || "{}"
-                ).token,
-            },
-        })
-        .then((response) => {
-            console.log(response);
-            if (response.status === 200) {
-                setFollowed(false);
-            }
-        })
-        .catch((error) => {
-            console.log(error);
         });
 };

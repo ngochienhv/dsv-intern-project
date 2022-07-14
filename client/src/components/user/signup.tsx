@@ -22,6 +22,7 @@ import { AlertCircle, ArrowBack } from "tabler-icons-react";
 import AppShell from "../general/layout/appShell";
 import Headers from "../general/layout/header";
 import Footers from "../general/layout/footer";
+import { baseUrl } from "../general/others/fetchDataFunctions";
 
 export default function Signup() {
     const theme = useMantineTheme();
@@ -83,7 +84,7 @@ export default function Signup() {
         };
 
         await axios
-            .post("http://localhost:5000/api/users", body)
+            .post(baseUrl + "/users", body)
             .then((response) => {
                 console.log(response);
                 localStorage.setItem("user", JSON.stringify(response.data));

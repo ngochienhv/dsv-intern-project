@@ -7,7 +7,7 @@ export default function Tag({ tag }: { tag: string }) {
         <Badge
             style={{ cursor: "pointer" }}
             component={Link}
-            to="/"
+            to={`/search/${tag}`}
             sx={(theme) => ({
                 transition: "background-color 0.3s",
                 "&:hover": {

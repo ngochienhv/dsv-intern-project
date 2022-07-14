@@ -15,6 +15,9 @@ import { UseFormReturnType } from "@mantine/form/lib/use-form";
 import React, { Dispatch, SetStateAction } from "react";
 import UserSmallCard from "./userSmallCard";
 import { Edit } from "tabler-icons-react";
+import axios from "axios";
+import { baseUrl } from "../others/fetchDataFunctions";
+import { useShallowEffect } from "@mantine/hooks";
 
 type Props = {
     form: UseFormReturnType<any>;
@@ -28,11 +31,23 @@ type Props = {
         description: string;
         bio: string;
         followers: Object[];
+        followersCount: number;
         following: Object[];
+        followingCount: number;
         bookmarks: Object[];
         firstname: string;
         lastname: string;
     };
+};
+
+export type userFollower = {
+    _id: string;
+    firstname: string;
+    lastname: string;
+    username: string;
+    avatar: string;
+    followed: boolean;
+    own: boolean;
 };
 
 export default function ProfileAbout({
@@ -43,11 +58,72 @@ export default function ProfileAbout({
     editBio,
     setEditBio,
 }: Props) {
-    const arr = [1, 2, 3, 4, 5, 6];
     const theme = useMantineTheme();
+    const [followers, setFollowers] = React.useState<userFollower[]>([]);
+    const [followings, setFollowings] = React.useState<userFollower[]>([]);
+    const [followersPage, setFollowersPage] = React.useState<number>(1);
+    const [followingsPage, setFollowingsPage] = React.useState<number>(1);
+    const maxPerPage = 6;
+    const getFollowers = async () => {
+        await axios
+            .get(
+                `${baseUrl}/profile/${profile.username}/followers/${
+                    followersPage - 1
+                }`,
+                {
+                    headers: {
+                        "x-access-token": JSON.parse(
+                            localStorage.getItem("user") || "{}"
+                        ).token,
+                    },
+                }
+            )
+            .then((response) => {
+                console.log(response);
+                setFollowers(response.data);
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    };
+
+    const getFollowings = async () => {
+        await axios
+            .get(
+                `${baseUrl}/profile/${profile.username}/followings/${
+                    followingsPage - 1
+                }`,
+                {
+                    headers: {
+                        "x-access-token": JSON.parse(
+                            localStorage.getItem("user") || "{}"
+                        ).token,
+                    },
+                }
+            )
+            .then((response) => {
+                console.log(response);
+                setFollowings(response.data);
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    };
+
+    useShallowEffect(() => {
+        getFollowers();
+        getFollowings();
+    }, [profile.username]);
+
+    useShallowEffect(() => {
+        getFollowers();
+    }, [followersPage]);
+    useShallowEffect(() => {
+        getFollowings();
+    }, [followingsPage]);
 
     return (
-        <Container>
+        <Container size="lg">
             <Grid>
                 <Grid.Col>
                     <Title order={4}>
@@ -99,24 +175,46 @@ export default function ProfileAbout({
                                         : theme.colors.dark[2],
                             })}
                         >
-                            (1.000)
+                            ({profile.followers.length})
                         </Title>
                     </Group>
                     <Space h="md" />
                     <Grid>
-                        {arr.map((x) => (
-                            <Grid.Col xl={4}>
-                                <UserSmallCard />
+                        {followers.map((follower) => (
+                            <Grid.Col
+                                xl={4}
+                                lg={4}
+                                md={6}
+                                sm={6}
+                                key={follower._id}
+                            >
+                                <UserSmallCard
+                                    _id={follower._id}
+                                    username={follower.username}
+                                    firstname={follower.firstname}
+                                    lastname={follower.lastname}
+                                    avatar={follower.avatar}
+                                    followed={follower.followed}
+                                    own={follower.own}
+                                />
                             </Grid.Col>
                         ))}
                         <Grid.Col>
-                            <Pagination
-                                total={3}
-                                position="right"
-                                color={
-                                    theme.colorScheme === "dark" ? "" : "dark"
-                                }
-                            />
+                            {profile.followers.length > 0 && (
+                                <Pagination
+                                    total={Math.ceil(
+                                        profile.followers.length / maxPerPage
+                                    )}
+                                    position="right"
+                                    color={
+                                        theme.colorScheme === "dark"
+                                            ? ""
+                                            : "dark"
+                                    }
+                                    page={followersPage}
+                                    onChange={setFollowersPage}
+                                />
+                            )}
                         </Grid.Col>
                     </Grid>
                 </Grid.Col>
@@ -132,16 +230,47 @@ export default function ProfileAbout({
                                         : theme.colors.dark[2],
                             })}
                         >
-                            (1.000)
+                            ({profile.following.length})
                         </Title>
                     </Group>
                     <Space h="md" />
                     <Grid>
-                        {arr.map((x) => (
-                            <Grid.Col xl={4}>
-                                <UserSmallCard />
+                        {followings.map((following) => (
+                            <Grid.Col
+                                xl={4}
+                                lg={4}
+                                md={6}
+                                sm={6}
+                                key={following._id}
+                            >
+                                <UserSmallCard
+                                    _id={following._id}
+                                    username={following.username}
+                                    firstname={following.firstname}
+                                    lastname={following.lastname}
+                                    avatar={following.avatar}
+                                    followed={following.followed}
+                                    own={following.own}
+                                />
                             </Grid.Col>
                         ))}
+                        <Grid.Col>
+                            {profile.following.length > 0 && (
+                                <Pagination
+                                    total={Math.ceil(
+                                        profile.following.length / maxPerPage
+                                    )}
+                                    position="right"
+                                    color={
+                                        theme.colorScheme === "dark"
+                                            ? ""
+                                            : "dark"
+                                    }
+                                    page={followingsPage}
+                                    onChange={setFollowingsPage}
+                                />
+                            )}
+                        </Grid.Col>
                     </Grid>
                 </Grid.Col>
             </Grid>

@@ -53,7 +53,7 @@ export default function ContentSection({
                         <Group>
                             <Avatar
                                 radius="xl"
-                                src={`data:image/jpeg;base64,${article.author.avatar}`}
+                                src={article.author.avatar}
                                 component={Link}
                                 to={
                                     !article.own
@@ -92,7 +92,8 @@ export default function ContentSection({
                                 </Text>
                             </Group>
                             <Text size="sm" color="gray">
-                                Last updated: {article.lastUpdated}
+                                Last updated:{" "}
+                                {new Date(article.lastUpdated).toDateString()}
                             </Text>
 
                             {!article.own && (
@@ -105,9 +106,11 @@ export default function ContentSection({
                                     />
                                 </Group>
                             )}
-                            {article.tags?.map((tag) => (
-                                <Tag tag={tag} key={tag} />
-                            ))}
+                            <Group>
+                                {article.tags?.map((tag) => (
+                                    <Tag tag={tag} key={tag} />
+                                ))}
+                            </Group>
                         </Group>
                     </Grid.Col>
                     <Grid.Col>
